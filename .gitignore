@@ -1,3 +1,18 @@
+**/.vscode/*
+
+# OS generated files #
+######################
+*.DS_Store
+*.h5
+.DS_Store
+**/.DS_Store
+**/._*
+**/.Spotlight-V100
+**/.Trashes
+**/ehthumbs.db
+**/Thumbs.db
+
+
 # Prerequisites
 *.d
 
