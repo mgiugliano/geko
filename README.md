@@ -8,7 +8,7 @@ It leverages over previous [work](https://www.sciencedirect.com/science/article/
 
 [![License: CC0-1.0](https://img.shields.io/badge/License-CC0_1.0-lightgrey.svg)](http://creativecommons.org/publicdomain/zero/1.0/)
 
-<img src="/img/logo.jpg?raw=true" alt="geKo logo" height="500px">
+<img src="/img/logo.jpg?raw=true" alt="geKo logo" height="200px">
 
 ## Motivations
 
@@ -33,7 +33,7 @@ We are after standardization and reproducibility in simple cellular electrophysi
 
 ## Funding
 
-<img src="/img/EU.jpg?raw=true" alt="EU logo" height="100px">
+<img src="/img/EU.png?raw=true" alt="EU logo" height="100px">
 <img src="/img/MUR.jpg?raw=true" alt="MUR logo" height="100px">
 <img src="/img/PNRR.jpg?raw=true" alt="PNRR logo" height="100px">
 <img src="/img/eBRAINSItaly.jpg?raw=true" alt="eBRAINS-Italy logo" height="100px">
