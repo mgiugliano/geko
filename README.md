@@ -1,5 +1,5 @@
 
-# geKo - generic electrophysiology kommander
+# geKo (geKo electrophysiology Kommander)
 
 geKo is a minimalistic software suite, based on a command-line interface (CLI), for standard cellular electrophysiological experiments.
 

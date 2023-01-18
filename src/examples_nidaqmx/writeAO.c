@@ -10,7 +10,7 @@ int main(void){
 	int32		error=0;
 	TaskHandle	taskHandle=0;
 	int32		written;
-	int8		data;
+	float64		data;
 	char		errBuff[2048]={'\0'};
 	int		ii;
 
@@ -18,9 +18,8 @@ int main(void){
 	// DAQmx Configure Code
 	/*********************************************/
 	DAQmxErrChk(DAQmxCreateTask("Task",&taskHandle));
-	DAQmxErrChk(DAQmxCreateDOChan(taskHandle,"AnalogIn/port0/line0","",DAQmx_Val_ChanPerLine));
-	// Use the line below to add multiple lines from the same port
-	// DAQmxErrChk(DAQmxCreateDOChan(taskHandle,"AnalogIn/port0/line0:7","",DAQmx_Val_ChanPerLine));
+	DAQmxErrChk(DAQmxCreateAIVoltageChan(taskHandle,"AnalogOut/ai0","ChannelName",DAQmx_Val_RSE,-10.0,10.0,DAQmx_Val_Volts,NULL));
+	// To write more analog outputs, simply add more channels to the task.
 
 	/*********************************************/
 	// DAQmx Start Code
@@ -31,9 +30,9 @@ int main(void){
 	// DAQmx Read Code
 	/*********************************************/
 	for(ii = 0; ii < 2000; ii++){
-		data = ii % 2;
-		DAQmxErrChk(DAQmxWriteDigitalLines(taskHandle,1,TRUE,10.0,DAQmx_Val_GroupByScanNumber,&data,&written,NULL));
-		printf("%4d\t%d\n", ii, data);
+		data = ii % 10;
+		DAQmxErrChk(DAQmxWriteAnalogF64(taskHandle,1,TRUE,10.0,DAQmx_Val_GroupByChannel,&data,&written,NULL));
+		printf("%4d\t%f\n", ii, data);
 	}
 
 Error:
@@ -52,4 +51,3 @@ Error:
 	getchar();
 	return 0;
 }
-
