@@ -5,6 +5,7 @@ geKo is a minimalistic software suite, based on a command-line interface (CLI), 
 
 It leverage over previous published [work](https://www.sciencedirect.com/science/article/abs/pii/S0165027014001198) from our lab, defining stimulation protocols for conventional voltage- and current-clamp experiments in terms of a concise and flexible meta description. This allows representing complex waveforms as a piece-wise parametric decomposition of elementary sub-waveforms, abstracting the stimulation hardware. 
 
+![geKo logo](/img/logo.jpg?raw=true "geKo logo")
 
 
 ## Motivations
@@ -27,38 +28,7 @@ We are unhappy with the majority of software available, bloated, inefficient, an
 
 
 
-## Features
 
-- Light/dark mode toggle
-- Live previews
-- Fullscreen mode
-- Cross platform
-
-
-## License
-
-[MIT](https://choosealicense.com/licenses/mit/)
-
-
-![Logo](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/th5xamgrr6se0x5ro4g6.png)
-
-
-## Usage/Examples
-
-```javascript
-import Component from 'my-project'
-
-function App() {
-  return <Component />
-}
-```
-
-
-## Acknowledgements
-
- - [Awesome Readme Templates](https://awesomeopensource.com/project/elangosundar/awesome-README-templates)
- - [Awesome README](https://github.com/matiassingers/awesome-readme)
- - [How to write a Good readme](https://bulldogjob.com/news/449-how-to-write-a-good-readme-for-your-github-project)
 
 
 ## Appendix
@@ -70,14 +40,9 @@ function App() {
 .....
 
 
-## Screenshots
-
-![geKo logo](/img/logo.jpg?raw=true "geKo logo")
-
-
 ## Funding
 
-![NextGenerationEU](/img/EU.png?raw=true|width=50px "EU funding logo")
+![NextGenerationEU](/img/EU.png?raw=true "EU funding logo")
 
 ![MUR](/img/MUR.jpg?raw=true|width=50px "MUR logo")
 
