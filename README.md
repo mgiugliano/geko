@@ -48,4 +48,4 @@ We are unhappy with the majority of software available, bloated, inefficient, an
 
 ![PNRR](/img/PNRR.jpg?raw=true "PNRR logo")
 
-![eBRAINS-Italy](/img/eBRAINSItaly.png?raw=true "eBRAINS-Italy logo")
+![eBRAINS-Italy](/img/eBRAINSItaly.jpg?raw=true "eBRAINS-Italy logo")
