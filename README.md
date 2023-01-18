@@ -34,4 +34,4 @@ We are after standardization and reproducibility in simple cellular electrophysi
 ## Funding
 
 <img src="/img/EU.png?raw=true" alt="EU logo" height="100px"> <img src="/img/MUR.jpg?raw=true" alt="MUR logo" height="100px"> <img src="/img/PNRR.jpg?raw=true" alt="PNRR logo" height="100px"> 
-<img src="/img/eBRAINSItaly.jpg" alt="eBRAINS-Italy logo" height="100px">
+<img src="/img/eBRAINSItaly.jpg?raw=true" alt="eBRAINS-Italy logo" height="100px">
