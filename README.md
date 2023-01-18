@@ -8,7 +8,7 @@ It leverages over previous [work](https://www.sciencedirect.com/science/article/
 
 [![License: CC0-1.0](https://img.shields.io/badge/License-CC0_1.0-lightgrey.svg)](http://creativecommons.org/publicdomain/zero/1.0/)
 
-![geKo logo](/img/logo.jpg?raw=true "geKo logo")
+![geKo logo](/img/logo.jpg:width=50px?raw=true "geKo logo")
 
 
 ## Motivations
