@@ -44,8 +44,8 @@ We are unhappy with the majority of software available, bloated, inefficient, an
 
 ![NextGenerationEU](/img/EU.png?raw=true "EU funding logo")
 
-![MUR](/img/MUR.jpg?raw=true|width=50px "MUR logo")
+![MUR](/img/MUR.jpg?raw=true "MUR logo")
 
-![PNRR](/img/PNRR.jpg?raw=true|width=50px "PNRR logo")
+![PNRR](/img/PNRR.jpg?raw=true "PNRR logo")
 
-![eBRAINS-Italy](/img/eBRAINSItaly.png?raw=true|width=50px "eBRAINS-Italy logo")
+![eBRAINS-Italy](/img/eBRAINSItaly.png?raw=true "eBRAINS-Italy logo")
