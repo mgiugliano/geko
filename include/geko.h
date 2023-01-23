@@ -20,7 +20,7 @@
 /*********************************************/
 
 int srate = 0; // The sampling rate in samples per second per channel.
-uInt64 sampsPerChan = 1; // Number of samples to generate/acquire per channel.
+int32 sampsPerChan = 1000; // Number of samples to generate/acquire per channel.
 
 float64 minVal = -10.0; // The minimum value, in units, that you expect to generate.
 float64 maxVal = 10.0; // The maximum value, in units, that you expect to generate.
@@ -41,6 +41,7 @@ int handleArgs(int argc, char *argv[]); // function to handle the command line a
 void checkPars(); // function to check the command line args against defaults
 void printPars(); // function to print the parameters used by the program
 void printHelp(); // function to print the help message
+void readwriteFinite(); 
 
 
 // FUNCTION DEFINITIONS
@@ -139,8 +140,8 @@ void readwriteFinite() {
     TaskHandle AITaskHandle=0, AOTaskHandle=0;
     int32 read; // How many samples have been read
     int32 written; // How many samples have been written
-    float64 data[sampsPerChan];
-    float64 stim[sampsPerChan];
+    float64 data[1000];
+    float64 stim[1000];
     char *aiCh;
     char *aoCh;
     FILE *fp;
@@ -152,13 +153,14 @@ void readwriteFinite() {
     else {
         aiCh = "Dev1/ai0:3";
     }
-
+    printf("AI: %s\n",aiCh);
     if (nAO == 1) {
         aoCh = "Dev1/ao0";
     }
     else {
         aoCh = "Dev1/ao0:1";
     }
+    printf("AO: %s\n",aoCh);
 
     DAQmxCreateTask("",&AITaskHandle);
     DAQmxCreateAIVoltageChan(AITaskHandle,aiCh,"",DAQmx_Val_RSE,minVal,maxVal,DAQmx_Val_Volts,NULL);
@@ -174,11 +176,14 @@ void readwriteFinite() {
     // HERE WE NEED TO GENERATE THE OUTPUT DATA
     int j;
     for (j=0; j<1000; j++)
-        stim[j] = j/100;
+        stim[j] = 5.0;
+        printf("%g\n", stim[j]);
 
     // Arm the AO task
     DAQmxWriteAnalogF64(AOTaskHandle,sampsPerChan,FALSE,timeout,dataLayout, stim, &written, NULL);
-    // int32 DAQmxWriteAnalogF64 (TaskHandle taskHandle, int32 numSampsPerChan, bool32 autoStart, float64 timeout, bool32 dataLayout, float64 writeArray[], int32 *sampsPerChanWritten, bool32 *reserved);
+    // int32 DAQmxWriteAnalogF64 (TaskHandle taskHandle, int32 numSampsPerChan, 
+    //          bool32 autoStart, float64 timeout, bool32 dataLayout, float64 writeArray[], 
+    //          int32 *sampsPerChanWritten, bool32 *reserved);
 
     // Start the AI task
 

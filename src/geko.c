@@ -26,12 +26,10 @@ int main(int argc, char **argv) {
     
     // printf("Setup your experiment:\n");
 
+
     readwriteFinite();
 
-
-
-
-
+    
     // FileName = getUniqueFileName();
     // printf("FileName: %s\n", FileName);
 
