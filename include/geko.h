@@ -8,17 +8,27 @@
 #include <time.h>    // for time()
 
 #include <ctype.h>   // for isprint()
-//#include <NIDAQmx.h> // for NIDAQmx
+#include <NIDAQmx.h> // for NIDAQmx
 
 // CONSTANTS
 #define FILESUFFIX ".dat"  // suffix for the output data file
 #define VER "0.1.0"
 #define GREET "geko v" VER " - geKo electrophysiology Kommander"
 
+/*********************************************/
+// DAQmx Configuration Options
+/*********************************************/
 
+int srate = 0; // The sampling rate in samples per second per channel.
+uInt64 sampsPerChan = 1; // Number of samples to generate/acquire per channel.
+
+float64 minVal = -10.0; // The minimum value, in units, that you expect to generate.
+float64 maxVal = 10.0; // The maximum value, in units, that you expect to generate.
+
+float64 timeout = 10; // The amount of time, in seconds, to wait for the function to read the sample(s).
+bool32 dataLayout = DAQmx_Val_GroupByChannel; // Specifies how the samples are arranged, either interleaved or noninterleaved. Options: DAQmx_Val_GroupByChannel, DAQmx_Val_GroupByScanNumber
 
 // GLOBAL VARIABLES (initialized to zero)
-unsigned int srate  = 0;   // sampling rate
 unsigned int nAI    = 0;   // number of analog inputs channels
 unsigned int nAO    = 0;   // number of analog outputs channels
 
@@ -123,43 +133,74 @@ void printHelp() {                       //-------------------------------------
 } // end of printHelp() --------------------------------------------------------
 
 
-// Function to launch data acquisition from channel 0 for 10 seconds
-void readAI() {
-    DAQmxErrChk (DAQmxCreateTask("", &taskHandle));
-    DAQmxErrChk (DAQmxCreateAIVoltageChan(taskHandle,"Dev1/ai0","",DAQmx_Val_Cfg_Default,-10.0,10.0,DAQmx_Val_Volts,NULL));
-    DAQmxErrChk (DAQmxCfgSampClkTiming(taskHandle,"",10000.0,DAQmx_Val_Rising,DAQmx_Val_FiniteSamps,1000));
-    DAQmxErrChk (DAQmxStartTask(taskHandle));
-    DAQmxErrChk (DAQmxReadAnalogF64(taskHandle,1000,10.0,DAQmx_Val_GroupByChannel,data,1000,&read,0));
-    DAQmxErrChk (DAQmxStopTask(taskHandle));
-    DAQmxErrChk (DAQmxClearTask(taskHandle));
-    printf("Acquired %d samples \n",read);
-    if( read>0 ) {
-        printf("Acquired %f samples \n",data[0]);
-        printf("Acquired %f samples \n",data[1]);
+// Generalized function to interact with DAQ
+void readwriteFinite() {
+    // Variables associated with the NIDAQ tasks
+    TaskHandle AITaskHandle=0, AOTaskHandle=0;
+    int32 read; // How many samples have been read
+    int32 written; // How many samples have been written
+    float64 data[sampsPerChan];
+    float64 stim[sampsPerChan];
+    char *aiCh;
+    char *aoCh;
+    FILE *fp;
+
+    // Check how many channels are active
+    if (nAI == 1) {
+        aiCh = "Dev1/ai0:1";
     }
-    return 0;
+    else {
+        aiCh = "Dev1/ai0:3";
+    }
+
+    if (nAO == 1) {
+        aoCh = "Dev1/ao0";
+    }
+    else {
+        aoCh = "Dev1/ao0:1";
+    }
+
+    DAQmxCreateTask("",&AITaskHandle);
+    DAQmxCreateAIVoltageChan(AITaskHandle,aiCh,"",DAQmx_Val_RSE,minVal,maxVal,DAQmx_Val_Volts,NULL);
+    DAQmxCfgSampClkTiming(AITaskHandle,"",srate,DAQmx_Val_Rising,DAQmx_Val_FiniteSamps,1000);
+  
+    DAQmxCreateTask("",&AOTaskHandle);   
+    DAQmxCreateAOVoltageChan(AOTaskHandle,aoCh,"",minVal,maxVal,DAQmx_Val_Volts,NULL);
+    DAQmxCfgSampClkTiming(AOTaskHandle,"",srate,DAQmx_Val_Rising,DAQmx_Val_FiniteSamps,1000);
+
+    // Connect AO start to AI start
+    DAQmxCfgDigEdgeStartTrig(AOTaskHandle, "ai/StartTrigger", DAQmx_Val_Rising);
+
+    // HERE WE NEED TO GENERATE THE OUTPUT DATA
+    int j;
+    for (j=0; j<1000; j++)
+        stim[j] = j/100;
+
+    // Arm the AO task
+    DAQmxWriteAnalogF64(AOTaskHandle,sampsPerChan,FALSE,timeout,dataLayout, stim, &written, NULL);
+    // int32 DAQmxWriteAnalogF64 (TaskHandle taskHandle, int32 numSampsPerChan, bool32 autoStart, float64 timeout, bool32 dataLayout, float64 writeArray[], int32 *sampsPerChanWritten, bool32 *reserved);
+
+    // Start the AI task
+
+    DAQmxReadAnalogF64(AITaskHandle,sampsPerChan,10.0,dataLayout,data,sampsPerChan,&read,NULL);
+    // int32 DAQmxReadAnalogF64 (TaskHandle taskHandle, int32 numSampsPerChan, float64 timeout, bool32 fillMode, float64 readArray[], uInt32 arraySizeInSamps, int32 *sampsPerChanRead, bool32 *reserved);
+
+
+    // DAQmxStopTask(analogOutputHandle);
+    // DAQmxStopTask(analogInputHandle);
+
+    DAQmxClearTask(AOTaskHandle);
+    DAQmxClearTask(AITaskHandle);
+
+
+    fp = fopen("DATA.txt", "w");
+
+    int i;
+    for (i=0; i<2000; i++)
+        fprintf(fp, "%g\n", data[i]);
+
+    fclose(fp);
 }
 
-void writeAO() {
-    DAQmxErrChk(DAQmxCreateTask("",&taskHandle));
-    DAQmxErrChk(DAQmxCreateAOVoltageChan(taskHandle,"Dev1/ao0","",0.0,10.0,DAQmx_Val_Volts,NULL));
-    DAQmxErrChk(DAQmxCfgSampClkTiming(taskHandle,"",10000.0,DAQmx_Val_Rising,DAQmx_Val_FiniteSamps,1000));
-    DAQmxErrChk(DAQmxStartTask(taskHandle));
-    DAQmxErrChk(DAQmxWriteAnalogF64(taskHandle,1000,0,10.0,DAQmx_Val_GroupByChannel,data,NULL,NULL));
-    DAQmxErrChk(DAQmxStopTask(taskHandle));
-    DAQmxErrChk(DAQmxClearTask(taskHandle));
-    return 0;
-}
+// Function to launch data acquisition from channel 0 for 10 seconds
 
-void readAI_and_writeAO_synchronously() {
-    DAQmxErrChk(DAQmxCreateTask("",&taskHandle));
-    DAQmxErrChk(DAQmxCreateAIVoltageChan(taskHandle,"Dev1/ai0","",DAQmx_Val_Cfg_Default,-10.0,10.0,DAQmx_Val_Volts,NULL));
-    DAQmxErrChk(DAQmxCreateAOVoltageChan(taskHandle,"Dev1/ao0","",0.0,10.0,DAQmx_Val_Volts,NULL));
-    DAQmxErrChk(DAQmxCfgSampClkTiming(taskHandle,"",10000.0,DAQmx_Val_Rising,DAQmx_Val_FiniteSamps,1000));
-    DAQmxErrChk(DAQmxStartTask(taskHandle));
-    DAQmxErrChk(DAQmxReadAnalogF64(taskHandle,1000,10.0,DAQmx_Val_GroupByChannel,data,1000,&read,0));
-    DAQmxErrChk(DAQmxWriteAnalogF64(taskHandle,1000,0,10.0,DAQmx_Val_GroupByChannel,data,NULL,NULL));
-    DAQmxErrChk(DAQmxStopTask(taskHandle));
-    DAQmxErrChk(DAQmxClearTask(taskHandle));
-    return 0;
-}

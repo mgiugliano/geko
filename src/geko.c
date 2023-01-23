@@ -3,6 +3,8 @@
 //
 
 #include "../include/geko.h"
+#include <stdio.h>
+#include "../include/NIDAQmx.h"
 
 int main(int argc, char **argv) {
     int i;
@@ -22,6 +24,9 @@ int main(int argc, char **argv) {
 
     printf("\n");
     
+    // printf("Setup your experiment:\n");
+
+    readwriteFinite();
 
 
 
