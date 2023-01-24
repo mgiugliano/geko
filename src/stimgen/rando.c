@@ -10,6 +10,7 @@
 #include <math.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <time.h>
 #include "rando.h"
 
 static unsigned long long int64(struct uniform_random *ran) { 

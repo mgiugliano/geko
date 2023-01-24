@@ -3,8 +3,6 @@
 //
 
 #include "../include/geko.h"
-#include <stdio.h>
-#include "../include/NIDAQmx.h"
 
 int main(int argc, char **argv) {
     int i;
@@ -19,13 +17,15 @@ int main(int argc, char **argv) {
 
     printPars();
 
-    for (int k = i; k < argc; k++)
-        printf("%s ", argv[k]);
+    // Check if i is 1. If so, run function generateStim
+    if (i == 1) {
+        printf("Stimulation protocol provided: ");
+        generateStimArray(argv[i]);
 
-    printf("\n");
-    
-    // printf("Setup your experiment:\n");
-
+    } else {
+        printf("No stimulation protocol provided. Default stimulation is 0 for 1 s.\n");
+        generateStimArray("default.stim");
+    }
 
     readwriteFinite();
 
