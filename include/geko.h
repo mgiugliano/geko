@@ -177,7 +177,7 @@ void readwriteFinite() {
     int j;
     for (j=0; j<1000; j++)
         stim[j] = 5.0;
-        printf("%g\n", stim[j]);
+
 
     // Arm the AO task
     DAQmxWriteAnalogF64(AOTaskHandle,sampsPerChan,FALSE,timeout,dataLayout, stim, &written, NULL);
