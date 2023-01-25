@@ -39,7 +39,7 @@ char *stimFile = NULL;    // name of the stimulation protocol file
 char *FileName;     // name of the output data file to be created
 
 //float64 data[];
-float64 stimArray[50];
+
 
 
 // FUNCTION PROTOTYPES
@@ -50,7 +50,7 @@ void printPars(); // function to print the parameters used by the program
 void printHelp(); // function to print the help message
 void readwriteFinite(); 
 void createDataStore();
-
+void print_image(FILE *fptr);
 
 // FUNCTION DEFINITIONS
 
@@ -110,7 +110,7 @@ int handleArgs(int argc, char *argv[]) {    //----------------------------------
 // Function to check the command line arguments against defaults
 void checkPars() {                       //-------------------------------------
     if (srate <= 0) {
-        srate = 10;     // 15 kHz default sampling rate
+        srate = 15000;     // 15 kHz default sampling rate
     }
     if (nA <= 1) {
         nA = 1;                 // 1 analog input channel by default
@@ -128,9 +128,12 @@ void checkPars() {                       //-------------------------------------
 } // end of checkPars() --------------------------------------------------------
 
 
-
+FILE *fptr = NULL;
 // Function to print the parameters used by the program, separated by ========
 void printPars() {                       //-------------------------------------
+    fptr = fopen("../img/logo.txt", "r");
+    print_image(fptr);
+    fclose(fptr);
     printf("\n");
     printf("========================================\n");
     printf("\n");
@@ -142,6 +145,14 @@ void printPars() {                       //-------------------------------------
     printf("\n");
 } // end of printPars() --------------------------------------------------------
 
+
+void print_image(FILE *fptr)
+{
+    char read_string[128];
+
+    while(fgets(read_string,sizeof(read_string),fptr) != NULL)
+        printf("%s",read_string);
+}
 
 // Function to print the help message
 void printHelp() {                       //-------------------------------------
@@ -155,6 +166,7 @@ void printHelp() {                       //-------------------------------------
 } // end of printHelp() --------------------------------------------------------
 
 
+float64 stimArray[150000];
 // Function to generate the stimulation array, based on the filename supplied
 void generateStimArray() {      //-----------------------------------------------
     // stimFile
@@ -164,9 +176,9 @@ void generateStimArray() {      //----------------------------------------------
     // of length 1 s * sampling rate
     printf("Generating stimulation array...\n");
     int i;
-    for (i = 0; i < 50; i++)
+    for (i = 0; i < 150000; i++)
     {
-        stimArray[i] = i/10;
+        stimArray[i] = 0;
     }    
     int32 size_stim = sizeof(stimArray)/sizeof(stimArray[0]);
     printf("Stimulation array size: %d\n", size_stim);
@@ -181,10 +193,10 @@ void readwriteFinite() {
     TaskHandle AITaskHandle=0, AOTaskHandle=0;
     int32 read; // How many samples have been read
     int32 written; // How many samples have been written
-    int32 sampsPerChan = sizeof(stimArray)/sizeof(stimArray[0]); // Number of samples to generate/acquire per channel.
+    int32 sampsPerChan = 150000; //sizeof(stimArray)/sizeof(stimArray[0]); // Number of samples to generate/acquire per channel.
     int32 size_data = sampsPerChan*nA*2; // Size of the data array
-    float64 data[size_data]; // Data array to be written
-
+    //float64 data[size_data]; // Data array to be written
+    float64 data[300000]; // Data array to be written
     FILE *fp;
     int error=0;
     char errBuff[2048]={'\0'};
@@ -202,7 +214,7 @@ void readwriteFinite() {
     DAQmxErrChk (DAQmxCfgDigEdgeStartTrig(AOTaskHandle, "ai/StartTrigger", DAQmx_Val_Rising));
 
     // Arm the AO task
-    DAQmxWriteAnalogF64(AOTaskHandle,sampsPerChan,FALSE,timeout,dataLayout, stimArray, &written, NULL);
+    DAQmxErrChk (DAQmxWriteAnalogF64(AOTaskHandle,sampsPerChan,FALSE,timeout,dataLayout, stimArray, &written, NULL));
 
     // Start the AI task
     printf("Performing the task...\n");
