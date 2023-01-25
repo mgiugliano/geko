@@ -15,12 +15,16 @@
 #define VER "0.1.0"
 #define GREET "geko v" VER " - geKo electrophysiology Kommander"
 
+#define DAQmxErrChk(functionCall) if( DAQmxFailed(error=(functionCall)) ) goto Error; else
+
 /*********************************************/
 // DAQmx Configuration Options
 /*********************************************/
 
-int srate = 0; // The sampling rate in samples per second per channel.
+float64 srate = 0; // The sampling rate in samples per second per channel.
 
+char *aiCh = NULL;
+char *aoCh = NULL;
 float64 minVal = -10.0; // The minimum value, in units, that you expect to generate.
 float64 maxVal = 10.0; // The maximum value, in units, that you expect to generate.
 
@@ -31,13 +35,12 @@ bool32 dataLayout = DAQmx_Val_GroupByScanNumber; // Specifies how the samples ar
 
 // GLOBAL VARIABLES (initialized to zero)
 unsigned int nA    = 0;   // number of analog inputs channels
-
+char *stimFile = NULL;    // name of the stimulation protocol file
 char *FileName;     // name of the output data file to be created
 
-float64 *data;
-float64 *stimArray;
-char *aiCh = NULL;
-char *aoCh = NULL;
+//float64 data[];
+float64 stimArray[50];
+
 
 // FUNCTION PROTOTYPES
 char *getUniqueFileName(); // function to generate a unique file name
@@ -46,6 +49,7 @@ void checkPars(); // function to check the command line args against defaults
 void printPars(); // function to print the parameters used by the program
 void printHelp(); // function to print the help message
 void readwriteFinite(); 
+void createDataStore();
 
 
 // FUNCTION DEFINITIONS
@@ -70,7 +74,7 @@ char *getUniqueFileName() {         //------------------------------------------
 int handleArgs(int argc, char *argv[]) {    //----------------------------------
     int c;                                   // variable to store the option
 
-    while ((c = getopt(argc, argv, "s:c:h:")) != -1) {
+    while ((c = getopt(argc, argv, "s:c:h:o:")) != -1) {
         switch (c) {
             case 's':
                 srate = atoi(optarg);
@@ -81,6 +85,9 @@ int handleArgs(int argc, char *argv[]) {    //----------------------------------
             case 'h':
                 printHelp();
                 exit(0);
+            case 'o':
+                stimFile = optarg;
+                break;
             case '?':
                 if (optopt == 's' || optopt == 'i' || optopt == 'o')
                     fprintf(stderr, "Option -%c requires an argument.", optopt);
@@ -103,9 +110,9 @@ int handleArgs(int argc, char *argv[]) {    //----------------------------------
 // Function to check the command line arguments against defaults
 void checkPars() {                       //-------------------------------------
     if (srate <= 0) {
-        srate = 15000;     // 15 kHz default sampling rate
+        srate = 10;     // 15 kHz default sampling rate
     }
-    if (nA <= 0) {
+    if (nA <= 1) {
         nA = 1;                 // 1 analog input channel by default
         aiCh = "Dev1/ai0:1";
         aoCh = "Dev1/ao0";
@@ -114,6 +121,9 @@ void checkPars() {                       //-------------------------------------
         aiCh = "Dev1/ai0:3";
         aoCh = "Dev1/ao0:1";
     }
+    if (stimFile == NULL) {
+        stimFile = "default.stim";
+    }
     
 } // end of checkPars() --------------------------------------------------------
 
@@ -121,9 +131,13 @@ void checkPars() {                       //-------------------------------------
 
 // Function to print the parameters used by the program, separated by ========
 void printPars() {                       //-------------------------------------
+    printf("\n");
     printf("========================================\n");
-    printf("Sampling rate: %d Hz\n", srate);
+    printf("\n");
+    printf("Sampling rate: %g Hz\n", srate);
     printf("Number of active channels: %d\n", nA);
+    printf("Stimulation protocol file: %s\n", stimFile);
+    printf("\n");
     printf("========================================\n");
     printf("\n");
 } // end of printPars() --------------------------------------------------------
@@ -136,14 +150,26 @@ void printHelp() {                       //-------------------------------------
     printf(" Options: \n");    
     printf(" -s <sampling rate> \n");
     printf(" -c <number of analog channels> \n");
+    printf(" -o <stimulation protocol filename> \n");
     printf(" -h print this help message \n");
 } // end of printHelp() --------------------------------------------------------
 
 
 // Function to generate the stimulation array, based on the filename supplied
-void generateStimArray(char *fname) {      //-------------------------------------
-    
+void generateStimArray() {      //-----------------------------------------------
+    // stimFile
     // stimArray = stimgen(stim);
+
+    // Assign to the variable stimArray the value of zero vector
+    // of length 1 s * sampling rate
+    printf("Generating stimulation array...\n");
+    int i;
+    for (i = 0; i < 50; i++)
+    {
+        stimArray[i] = i/10;
+    }    
+    int32 size_stim = sizeof(stimArray)/sizeof(stimArray[0]);
+    printf("Stimulation array size: %d\n", size_stim);
     return;
 
 } // end of generateStimArray() -------------------------------------------------
@@ -155,54 +181,86 @@ void readwriteFinite() {
     TaskHandle AITaskHandle=0, AOTaskHandle=0;
     int32 read; // How many samples have been read
     int32 written; // How many samples have been written
-    
-    int32 sampsPerChan = 0; // Number of samples to generate/acquire per channel.
-    int32 size_data = 0; // Size of the data array
+    int32 sampsPerChan = sizeof(stimArray)/sizeof(stimArray[0]); // Number of samples to generate/acquire per channel.
+    int32 size_data = sampsPerChan*nA*2; // Size of the data array
+    float64 data[size_data]; // Data array to be written
+
     FILE *fp;
+    int error=0;
+    char errBuff[2048]={'\0'};
 
-    // Set sampsPerChan to be the same as the number of elements in the stimArray
-    sampsPerChan = sizeof(stimArray)/sizeof(stimArray[0]);
     FileName = getUniqueFileName();
-
-    DAQmxCreateTask("",&AITaskHandle);
-    DAQmxCreateAIVoltageChan(AITaskHandle,aiCh,"",DAQmx_Val_RSE,minVal,maxVal,DAQmx_Val_Volts,NULL);
-    DAQmxCfgSampClkTiming(AITaskHandle,"",srate,DAQmx_Val_Rising,DAQmx_Val_FiniteSamps,sampsPerChan);
+    DAQmxErrChk (DAQmxCreateTask("",&AITaskHandle));
+    DAQmxErrChk (DAQmxCreateAIVoltageChan(AITaskHandle,aiCh,"",DAQmx_Val_RSE,minVal,maxVal,DAQmx_Val_Volts,NULL));
+    DAQmxErrChk (DAQmxCfgSampClkTiming(AITaskHandle,NULL,srate,DAQmx_Val_Rising,DAQmx_Val_FiniteSamps,sampsPerChan));
   
-    DAQmxCreateTask("",&AOTaskHandle);   
-    DAQmxCreateAOVoltageChan(AOTaskHandle,aoCh,"",minVal,maxVal,DAQmx_Val_Volts,NULL);
-    DAQmxCfgSampClkTiming(AOTaskHandle,"",srate,DAQmx_Val_Rising,DAQmx_Val_FiniteSamps,sampsPerChan);
+    DAQmxErrChk (DAQmxCreateTask("",&AOTaskHandle));   
+    DAQmxErrChk (DAQmxCreateAOVoltageChan(AOTaskHandle,aoCh,"",minVal,maxVal,DAQmx_Val_Volts,NULL));
+    DAQmxErrChk (DAQmxCfgSampClkTiming(AOTaskHandle,"",srate,DAQmx_Val_Rising,DAQmx_Val_FiniteSamps,sampsPerChan));
 
     // Connect AO start to AI start
-    DAQmxCfgDigEdgeStartTrig(AOTaskHandle, "ai/StartTrigger", DAQmx_Val_Rising);
+    DAQmxErrChk (DAQmxCfgDigEdgeStartTrig(AOTaskHandle, "ai/StartTrigger", DAQmx_Val_Rising));
 
     // Arm the AO task
     DAQmxWriteAnalogF64(AOTaskHandle,sampsPerChan,FALSE,timeout,dataLayout, stimArray, &written, NULL);
-    // int32 DAQmxWriteAnalogF64 (TaskHandle taskHandle, int32 numSampsPerChan, 
-    //          bool32 autoStart, float64 timeout, bool32 dataLayout, float64 writeArray[], 
-    //          int32 *sampsPerChanWritten, bool32 *reserved);
 
     // Start the AI task
+    printf("Performing the task...\n");
+    DAQmxErrChk (DAQmxStartTask(AOTaskHandle));
+    DAQmxErrChk (DAQmxStartTask(AITaskHandle));
 
-    DAQmxReadAnalogF64(AITaskHandle,sampsPerChan,timeout,dataLayout,data,sampsPerChan,&read,NULL);
+    DAQmxErrChk (DAQmxReadAnalogF64(AITaskHandle,sampsPerChan,timeout,dataLayout,data,size_data,&read,NULL));
     // int32 DAQmxReadAnalogF64 (TaskHandle taskHandle, int32 numSampsPerChan, float64 timeout, bool32 fillMode, float64 readArray[], uInt32 arraySizeInSamps, int32 *sampsPerChanRead, bool32 *reserved);
 
+    DAQmxErrChk (DAQmxClearTask(AOTaskHandle));
+    DAQmxErrChk (DAQmxClearTask(AITaskHandle));
+        
+    //fp = fopen(FileName, "wb");
+    //fwrite(&data, sizeof(data), 1, fp);
+    //fclose(fp);
 
-    DAQmxClearTask(AOTaskHandle);
-    DAQmxClearTask(AITaskHandle);
-
-    size_data = sizeof(data)/sizeof(data[0]);
-
-    fp = fopen(FileName, "wb");
-
-    fwrite(data, sizeof(data), 1, fp);
+    FILE *fp2;
+    fp2 = fopen("dataStore.txt", "w");
+    fprintf(fp2, "%-20s\t%-20s\t%-20s\n", "ai0", "ai1", "ao0");
     int i;
-    for (i=0; i<size_data; i++)
-        fprintf(fp, "%g\n", data[i]);
+    for (int i = 0; i < sampsPerChan; i++)
+        fprintf(fp2, "%-20.4f\t%-20.4f\t%-20.4f\n", data[2*i], data[2*i+1],stimArray[i]);
+    
+    fclose(fp2);
 
-    fclose(fp);
+    printf("Task completed.\n");
 
-    return 0;
+    Error:
+	if( DAQmxFailed(error) )
+		DAQmxGetExtendedErrorInfo(errBuff,2048);
+	if( AITaskHandle ) {
+		/*********************************************/
+		// DAQmx Stop Code
+		/*********************************************/
+		DAQmxStopTask(AITaskHandle);
+		DAQmxClearTask(AITaskHandle);
+		AITaskHandle = 0;
+	}
+	if( AOTaskHandle ) {
+		/*********************************************/
+		// DAQmx Stop Code
+		/*********************************************/
+		DAQmxStopTask(AOTaskHandle);
+		DAQmxClearTask(AOTaskHandle);
+		AOTaskHandle = 0;
+	}
+	if( DAQmxFailed(error) )
+		printf("DAQmx Error: %s\n",errBuff);
+
+    return;
 }
 
-// Function to launch data acquisition from channel 0 for 10 seconds
+void createDataStore() {
+  
+    return;
+
+
+}
+
+
 
