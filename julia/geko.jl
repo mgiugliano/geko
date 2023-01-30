@@ -5,6 +5,9 @@
 #=========================================#
 
 include("./blocks/parseInput.jl")
+include("./blocks/mkSettings.jl")
+include("./blocks/mkStim.jl")
+include("./blocks/mkRun.jl")
 
 print("Welcome to GeKo!\n\n")
 print("Usage: geko.jl [options]\n")

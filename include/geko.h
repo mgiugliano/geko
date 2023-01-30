@@ -28,7 +28,7 @@ char *aoCh = NULL;
 float64 minVal = -10.0; // The minimum value, in units, that you expect to generate.
 float64 maxVal = 10.0; // The maximum value, in units, that you expect to generate.
 
-float64 timeout = 10; // The amount of time, in seconds, to wait for the function to read the sample(s).
+float64 timeout = -1; // The amount of time, in seconds, to wait for the function to read the sample(s).
 
 // TODO: NOT RESPONDING
 bool32 dataLayout = DAQmx_Val_GroupByScanNumber; // Specifies how the samples are arranged, either interleaved or noninterleaved. Options: DAQmx_Val_GroupByChannel, DAQmx_Val_GroupByScanNumber
@@ -176,7 +176,7 @@ void generateStimArray() {      //----------------------------------------------
     // of length 1 s * sampling rate
     printf("Generating stimulation array...\n");
     int i;
-    for (i = 0; i < 150000; i++)
+    for (i = 0; i < srate; i++)
     {
         stimArray[i] = 0;
     }    
@@ -232,7 +232,7 @@ void readwriteFinite() {
     //fclose(fp);
 
     FILE *fp2;
-    fp2 = fopen("dataStore.txt", "w");
+    fp2 = fopen("data.txt", "w");
     fprintf(fp2, "%-20s\t%-20s\t%-20s\n", "ai0", "ai1", "ao0");
     int i;
     for (int i = 0; i < sampsPerChan; i++)
