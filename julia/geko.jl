@@ -32,6 +32,5 @@ while true
         break
     end
     parseInput(usr_input_raw)
-    print("\n")
     print("Enter input:\n")
 end
