@@ -4,25 +4,28 @@
 #      Adam Armada-Moreira, Jan 2023      #
 #=========================================#
 
-# Global variables
-global fs::Int64 = 15000;
-global nA::Int64 = 1;
-global mode::String = "VC";
-global filename::String = "data.txt";
-global stimfile::String = "default.stim";
-global cmdGeko::Cmd = `/home/user/acquisition/adam/geko/src/geko -s1 -c1 `;
-global doPlot::Bool = 0;
-
+# External packages
 using UnicodePlots
 using DelimitedFiles
+
+# Local functions
 include("./blocks/gekofun.jl")
+
+# Global variables
+global fs = 15000;
+global nA = 1;
+global mode = "VC";
+global filename = "data.txt";
+global stimfile = "default.stim";
+global cmdGeko = `/home/user/acquisition/adam/geko/src/geko `;
+global doPlot = 0;
 
 
 print("Welcome to GeKo!\n\n")
 print("Usage: geko.jl [options]\n")
-print("     set -s -c -m -f <Sampling rate | Nr of active channels | Recording mode | (opt) Filename>\n")
-print("     run -o -p       <Output file (.stim) | Plot recorded data>\n")
-print("     stim            <WIP>\n")
+print("     set -s -c -m -f Define experiment settings: <Sampling rate | Nr of active channels | Recording mode | (opt) Filename>\n")
+print("     run -o -p       Run finite acquisition and stimulation: <Output file (.stim) | Plot recorded data>\n")
+print("     stim -o         Create a stimulation file: <Output file>\n")
 print("     exit            <Quit the program>\n\n")
 
 print("Enter input:\n")

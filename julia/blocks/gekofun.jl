@@ -26,6 +26,10 @@ function parseInput(usr_input_raw)
     elseif usr_input[1] == "stim" # Create stimulation file
         print("Creating new stimulation file:\n\n")
         mkStim(usr_input)
+
+    elseif usr_input[1] == "ecode" # Run ecode protocol
+        print("Running ecode protocol:\n\n")
+        runEcode(usr_input)
     end
     print("\n----------------------------------\n\n")
 end
@@ -119,4 +123,47 @@ function plotData(datafile)
 end
 
 function mkStim(usr_input)
+    outputFile = "tmp.stim";
+    for i=2:lastindex(usr_input)
+        if usr_input[i][1] == 'o'
+            outputFile = usr_input[i][2:end] * ".stim";
+            print("Output file: ", outputFile, "\n")
+        end
+    end
+    print("Enter stimulation protocol, one line at a time:\n")
+    print("Press ENTER to finish.\n\n")
+    stimProtocol = "";
+    usrConfirm = "n";
+    while usrConfirm != "y"
+        while true
+            line = readline()
+            if line == ""
+                break
+            end
+            global stimProtocol = stimProtocol * line * "\n";
+        end
+        # Plot the stimulation protocol and ask the user if it's ok
+         
+        stimArray = stimgen(stimProtocol);
+        x = 1:length(stimArray);
+
+        display(lineplot(x, stimArray, 
+                width = 80, height = 20, 
+                color=:green, title = "Stimulation protocol"))
+        print("\n\n")
+
+        print("Is the stimulation protocol correct? (y/n)\n")
+        global usrConfirm = readline();
+    end
+
+    open(outputFile, "w") do f
+        write(f, stimProtocol)
+    end
+    print("Stimulation protocol saved to $outputFile\n")
 end
+
+function runEcode(usr_input)
+end
+
+
+
