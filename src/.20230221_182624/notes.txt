@@ -1,0 +1,4 @@
+[string used]
+õ.ñ‚SU./geko -r 2 -i 1 
+[experimental notes]
+f
