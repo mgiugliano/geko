@@ -7,6 +7,7 @@
 
 #include <stdio.h>   // for printf()
 #include <unistd.h>  // for getopt()
+#include <getopt.h>
 #include <stdlib.h>  // for exit()
 #include <time.h>    // for time()
 #include <string.h>  // for strlen()

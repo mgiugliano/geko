@@ -1,0 +1,11 @@
+# TODO
+## Include plotting of the data
+### https://plplot.sourceforge.net
+### https://github.com/InductiveComputerScience/pbPlots/tree/v0.1.7.1
+### https://www.delftstack.com/howto/c/plotting-in-c/ (calling gnuplot)
+
+
+## If the stimulus size is too big, chop it down to manageable chunks and treat them as repeats with ISI = 0
+
+## Integrate stimgen
+### Maybe allow a preview of the stimulus before calling geko.

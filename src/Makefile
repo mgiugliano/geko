@@ -4,7 +4,7 @@ CC = gcc
 # compiler flags:
 #  -g    adds debugging information to the executable file
 #  -Wall turns on most, but not all, compiler warnings
-CFLAGS  = -Wall
+#CFLAGS  = -Wall
 
 # linking libraries:
 LIBS = -lnidaqmx
@@ -17,6 +17,6 @@ all: $(TARGET)
 	$(TARGET): $(TARGET).c
 		$(CC) $(CFLAGS) -o $(TARGET) $(TARGET).c $(LIBS)
 
-	clean:
-		$(RM) $(TARGET)
+clean:
+	$(RM) $(TARGET)
 
