@@ -85,7 +85,7 @@ void printHelp(); // function to print the help message
 double *generateStimArray(char *stimFile); // function to generate the stimulation array
 void mkOutputDir(); // function to create the output directory
 double *doSingleTask(double *stimArray); // function to do a single task
-void saveRepData(double *data); // function to save the data from a single repetition
+void saveRepData(double *data, double *stimArray); // function to save the data from a single repetition
 void doTask();
 void mkExperimentalLog();
 
@@ -384,15 +384,22 @@ double *doSingleTask(double *stimArray) {                    //-----------------
       
 } // end of doSingleTask() ----------------------------------------------------
 
-void saveRepData(double *data) {
+void saveRepData(double *data, double *stimArray) { //---------------------------------------
     char *fullFileName = malloc(200);
-    FILE *fp;
+    FILE *fp, *ft;
     sprintf(fullFileName,"%s/%s_%i%s",FileName,FileName,currrep,FILESUFFIX);
     fp = fopen(fullFileName, "wb");
     fwrite(&data, sizeof(data), 1, fp);
     fclose(fp);
    
     printf("Data saved to %s\n\n", fullFileName);
+
+    sprintf(fullFileName,"%s/.%s/notes.txt",FileName,FileName);
+    ft = fopen(fullFileName, "w+");
+    fputs("[stimulation applied]\n", ft);
+    fputs(stimArray, ft);
+    fputs("\n", ft);
+    fclose(ft);
 }
 
 void mkExperimentalLog() {               //---------------------------------------
@@ -453,9 +460,14 @@ void doTask() {                          //-------------------------------------
     {
         currrep = i + 1;
         // Generate stimulation array
-        double *stimArray = generateStimArray(stimFile); // TODO: Parse only specific lines of stimFile
+        // Create a char variable that holds the subset of stimFile to pass to the function
+        char *currStim;
+        // Assign the subset of stimFile to currStim
+        currStim = stimFile;
+        
+        double *stimArray = generateStimArray(currStim); // TODO: Parse only specific lines of stimFile
         double *data = doSingleTask(stimArray);
-        saveRepData(data);
+        saveRepData(data, currStim);
         sleep(isi);
     }
     mkExperimentalLog();
