@@ -17,9 +17,8 @@ int main(int argc, char *argv[]) {
 
     readConfigFile();               // read the config file
 
-    if (silence == 1) {
+    if (silence == 0) {
         printPars();
-        exit(0);
     }
 
     doTask();

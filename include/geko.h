@@ -33,7 +33,6 @@ typedef struct
     const char* device;
     const char* aiCh;
     const char* aoCh;
-    const char* mode;
     int ai_factor_cc;
     int ai_factor_vc;
     double ao_factor_cc;
@@ -63,6 +62,7 @@ char *configFile = "geko.ini";  // name of the configuration file
 char *stimFile = "default.stim";    // name of the stimulation protocol file
 char *FileName = NULL;     // name of the output data file to be created
 char *user_prompt = NULL;   // command used to run this program
+char *mode = "cc"; // mode of operation: cc = current clamp, vc = voltage clamp
 int ai_factor = 1;
 double ao_factor = 1.0;
 configuration config;
@@ -84,7 +84,8 @@ void print_image(FILE *fptr);
 void printHelp(); // function to print the help message
 double *generateStimArray(char *stimFile); // function to generate the stimulation array
 void mkOutputDir(); // function to create the output directory
-void doSingleTask(); // function to do a single task
+double *doSingleTask(double *stimArray); // function to do a single task
+void saveRepData(double *data); // function to save the data from a single repetition
 void doTask();
 void mkExperimentalLog();
 
@@ -126,13 +127,16 @@ int handleArgs(int argc, char *argv[]) {    //----------------------------------
 // Function to handle by getopts the command line arguments
     int c;     // variable to store the option
 
-    while ((c = getopt(argc, argv, "c:s:hr:i:x:q")) != -1) {
+    while ((c = getopt(argc, argv, "c:s:m:hr:i:x:q")) != -1) {
         switch (c) {
             case 'c':
                 configFile = optarg;
                 break;
             case 's':
                 stimFile = optarg;
+                break;
+            case 'm':
+                mode = optarg;
                 break;
             case 'h':
                 printHelp();
@@ -192,8 +196,6 @@ static int handler(void* user, const char* section, const char* name, const char
         pconfig->srate = atoi(value);
     } else if (MATCH("hardware", "nrchans")) {
         pconfig->nA = atoi(value);
-    } else if (MATCH("amplifier", "mode")) {
-        pconfig->mode = strdup(value);
     } else if (MATCH("amplifier", "ai_factor_cc")) {
         pconfig->ai_factor_cc = atoi(value);
     } else if (MATCH("amplifier", "ai_factor_vc")) {
@@ -219,14 +221,14 @@ int readConfigFile() {                 //---------------------------------------
 
 void setConversionFactors() {           //---------------------------------------
 // This function sets the conversion factors for the analog input and output
-    if (strcmp(config.mode, "cc") == 0) {
+    if (strcmp(mode, "cc") == 0) {
         ai_factor = config.ai_factor_cc;
         ao_factor = config.ao_factor_cc;
-    } else if (strcmp(config.mode, "vc") == 0) {
+    } else if (strcmp(mode, "vc") == 0) {
         ai_factor = config.ai_factor_vc;
         ao_factor = config.ao_factor_vc;
     } else {
-        printf("Unknown amplifier mode: %s\n", config.mode);
+        printf("Unknown amplifier mode: %s\n", mode);
         exit(1);
     }
 } // end of setConversionFactors() --------------------------------------------
@@ -262,6 +264,7 @@ void printHelp() {                       //-------------------------------------
     printf(" Options: \n");    
     printf(" [-c] <config file> \n");
     printf(" -s <stimulation protocol file> \n");
+    printf(" -m <amplifier mode> \n");
     printf(" -r <Number of stimulus repetitions> \n");
     printf(" -i <Inter stimuli interval> \n");
     printf(" [-x] <Suffix for output file> \n");
@@ -293,6 +296,8 @@ void mkOutputDir() {                     //-------------------------------------
 // This function creates the output directory
     FileName = getUniqueFileName();
     char *extraFileName = malloc(2*strlen(FileName)+3);
+    char *fullFileName = malloc(300);
+    FILE *ft;
     sprintf(extraFileName,"%s/.%s", FileName,FileName);
 
     int result = mkdir(FileName, 0777);
@@ -308,13 +313,17 @@ void mkOutputDir() {                     //-------------------------------------
         printf("Error creating directory\n");
         return;
     }
+
+    sprintf(fullFileName,"%s/.%s/notes.txt",FileName,FileName);
+    ft = fopen(fullFileName, "w+");
+    fputs("[string used]\n", ft);
+    fputs(user_prompt, ft);
+    fclose(ft);
 } // end of mkOutputDir() -----------------------------------------------------
 
-void doSingleTask() {                    //---------------------------------------
+double *doSingleTask(double *stimArray) {                    //---------------------------------------
 // This function performs a single task, i.e. a single stimulation protocol
-    float64 data[300000]; // Data array to be written
-    char *fullFileName = malloc(200);
-    FILE *fp;
+    static double data[300000]; // Data array to be written
     int error=0;
     char errBuff[2048]={'\0'};
     // Variables associated with the NIDAQ tasks
@@ -324,8 +333,7 @@ void doSingleTask() {                    //-------------------------------------
     int32 sampsPerChan = 15000; //sizeof(stimArray)/sizeof(stimArray[0]); // Number of samples to generate/acquire per channel.
     int32 size_data = sampsPerChan*config.nA*2; // Size of the data array
     
-    // Generate stimulation array
-    double *stimArray = generateStimArray(stimFile);
+    
     printf("Performing repetition %d of %d...\n", currrep, reps);
     DAQmxErrChk (DAQmxCreateTask("",&AITaskHandle));
     DAQmxErrChk (DAQmxCreateAIVoltageChan(AITaskHandle,config.aiCh,"",DAQmx_Val_RSE,minVal,maxVal,DAQmx_Val_Volts,NULL));
@@ -350,12 +358,7 @@ void doSingleTask() {                    //-------------------------------------
         data[i] = data[i]*ai_factor;
     }
     
-    sprintf(fullFileName,"%s/%s_%i%s",FileName,FileName,currrep,FILESUFFIX);
-    fp = fopen(fullFileName, "wb");
-    fwrite(data, sizeof(data), 1, fp);
-    fclose(fp);
-   
-    printf("Data saved to %s\n\n", fullFileName);
+    return data;
 
     Error:
 	if( DAQmxFailed(error) )
@@ -380,6 +383,17 @@ void doSingleTask() {                    //-------------------------------------
 		printf("DAQmx Error: %s\n",errBuff);    
       
 } // end of doSingleTask() ----------------------------------------------------
+
+void saveRepData(double *data) {
+    char *fullFileName = malloc(200);
+    FILE *fp;
+    sprintf(fullFileName,"%s/%s_%i%s",FileName,FileName,currrep,FILESUFFIX);
+    fp = fopen(fullFileName, "wb");
+    fwrite(&data, sizeof(data), 1, fp);
+    fclose(fp);
+   
+    printf("Data saved to %s\n\n", fullFileName);
+}
 
 void mkExperimentalLog() {               //---------------------------------------
     FILE  *fs1, *ft1, *fs2, *ft2, *ft = NULL;
@@ -412,19 +426,19 @@ void mkExperimentalLog() {               //-------------------------------------
     fclose(fs2);
     fclose(ft2);
 
-    printf("Do you have any experimental notes to add? (Press ENTER to continue)\n");
-    // Get user input
-    fgets(notes, 1000, stdin);
+    
 
-    sprintf(fullFileName,"%s/.%s/notes.txt",FileName,FileName);
-    ft = fopen(fullFileName, "w+");
-    fputs("[string used]\n", ft);
-
-    fputs(user_prompt, ft);
-    fputs("\n\n", ft);
-    fputs("[experimental notes]\n", ft);
-    fputs(notes, ft);
-
+    if (silence == 0) {
+        printf("Do you have any experimental notes to add? (Press ENTER to continue)\n");
+        // Get user input
+        fgets(notes, 1000, stdin);
+        sprintf(fullFileName,"%s/.%s/notes.txt",FileName,FileName);
+        ft = fopen(fullFileName, "w+");
+        fputs("\n\n", ft);
+        fputs("[experimental notes]\n", ft);
+        fputs(notes, ft);
+        fclose(ft);
+    }
 
     printf("Task completed.\n");
 
@@ -438,7 +452,10 @@ void doTask() {                          //-------------------------------------
     for (i = 0; i < reps; i++)
     {
         currrep = i + 1;
-        doSingleTask();
+        // Generate stimulation array
+        double *stimArray = generateStimArray(stimFile); // TODO: Parse only specific lines of stimFile
+        double *data = doSingleTask(stimArray);
+        saveRepData(data);
         sleep(isi);
     }
     mkExperimentalLog();
