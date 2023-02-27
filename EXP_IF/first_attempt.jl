@@ -1,5 +1,5 @@
 # EXPONENTIAL INTEGRATE AND FIRE STOCHASTIC POINT NEURON
-# Heun's integration method with exact generation of wh
+# Heun's integration method with exact generation of wh 
 
 using PyPlot, Distributions;
 
