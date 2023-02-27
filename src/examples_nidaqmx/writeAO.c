@@ -18,7 +18,7 @@ int main(void){
 	// DAQmx Configure Code
 	/*********************************************/
 	DAQmxErrChk(DAQmxCreateTask("Task",&taskHandle));
-	DAQmxErrChk(DAQmxCreateAIVoltageChan(taskHandle,"AnalogOut/ai0","ChannelName",DAQmx_Val_RSE,-10.0,10.0,DAQmx_Val_Volts,NULL));
+	DAQmxErrChk(DAQmxCreateAIVoltageChan(taskHandle,"Dev1/ai0","ChannelName",DAQmx_Val_RSE,-10.0,10.0,DAQmx_Val_Volts,NULL));
 	// To write more analog outputs, simply add more channels to the task.
 
 	/*********************************************/
@@ -51,3 +51,8 @@ Error:
 	getchar();
 	return 0;
 }
+
+
+
+
+
