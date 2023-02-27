@@ -263,8 +263,8 @@ void printHelp() {                       //-------------------------------------
     printf(" Usage: geko [options] \n");   
     printf(" Options: \n");    
     printf(" [-c] <config file> \n");
-    printf(" -s <stimulation protocol file> \n");
-    printf(" -m <amplifier mode> \n");
+    printf(" [-s] <stimulation protocol file> \n");
+    printf(" [-m] <amplifier mode> \n");
     printf(" -r <Number of stimulus repetitions> \n");
     printf(" -i <Inter stimuli interval> \n");
     printf(" [-x] <Suffix for output file> \n");
@@ -468,6 +468,9 @@ void doTask() {                          //-------------------------------------
         currStim = "this"; // currStim = stimFile;
         
         double *stimArray = generateStimArray(currStim); // TODO: Parse only specific lines of stimFile
+        // Here double check if the size of the stimulus is too big. If so, split it into multiple stimuli.
+
+        
         double *data = doSingleTask(stimArray);
         saveRepData(data, currStim);
         sleep(isi);
