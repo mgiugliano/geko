@@ -85,7 +85,7 @@ void printHelp(); // function to print the help message
 double *generateStimArray(char *stimFile); // function to generate the stimulation array
 void mkOutputDir(); // function to create the output directory
 double *doSingleTask(double *stimArray); // function to do a single task
-void saveRepData(double *data, double *stimArray); // function to save the data from a single repetition
+void saveRepData(double *data, char *stimArray); // function to save the data from a single repetition
 void doTask();
 void mkExperimentalLog();
 
@@ -315,9 +315,12 @@ void mkOutputDir() {                     //-------------------------------------
     }
 
     sprintf(fullFileName,"%s/.%s/notes.txt",FileName,FileName);
-    ft = fopen(fullFileName, "w+");
+    ft = fopen(fullFileName, "a");
     fputs("[string used]\n", ft);
     fputs(user_prompt, ft);
+    fputs("\n", ft);
+    fputs("\n", ft);
+    fputs("[stimulation applied]\n", ft);
     fclose(ft);
 } // end of mkOutputDir() -----------------------------------------------------
 
@@ -384,7 +387,7 @@ double *doSingleTask(double *stimArray) {                    //-----------------
       
 } // end of doSingleTask() ----------------------------------------------------
 
-void saveRepData(double *data, double *stimArray) { //---------------------------------------
+void saveRepData(double *data, char *stimArray) { //---------------------------------------
     char *fullFileName = malloc(200);
     FILE *fp, *ft;
     sprintf(fullFileName,"%s/%s_%i%s",FileName,FileName,currrep,FILESUFFIX);
@@ -395,8 +398,7 @@ void saveRepData(double *data, double *stimArray) { //--------------------------
     printf("Data saved to %s\n\n", fullFileName);
 
     sprintf(fullFileName,"%s/.%s/notes.txt",FileName,FileName);
-    ft = fopen(fullFileName, "w+");
-    fputs("[stimulation applied]\n", ft);
+    ft = fopen(fullFileName, "a");
     fputs(stimArray, ft);
     fputs("\n", ft);
     fclose(ft);
@@ -440,8 +442,8 @@ void mkExperimentalLog() {               //-------------------------------------
         // Get user input
         fgets(notes, 1000, stdin);
         sprintf(fullFileName,"%s/.%s/notes.txt",FileName,FileName);
-        ft = fopen(fullFileName, "w+");
-        fputs("\n\n", ft);
+        ft = fopen(fullFileName, "a");
+        fputs("\n", ft);
         fputs("[experimental notes]\n", ft);
         fputs(notes, ft);
         fclose(ft);
@@ -463,7 +465,7 @@ void doTask() {                          //-------------------------------------
         // Create a char variable that holds the subset of stimFile to pass to the function
         char *currStim;
         // Assign the subset of stimFile to currStim
-        currStim = stimFile;
+        currStim = "this"; // currStim = stimFile;
         
         double *stimArray = generateStimArray(currStim); // TODO: Parse only specific lines of stimFile
         double *data = doSingleTask(stimArray);
