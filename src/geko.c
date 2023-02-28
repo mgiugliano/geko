@@ -1,5 +1,5 @@
 //
-//
+// writing stuff
 //
 #include "../include/geko.h"
 
