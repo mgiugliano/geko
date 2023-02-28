@@ -52,12 +52,17 @@ voltage_sub = integrator(V_reset, 1.5, 0.0, 100)  # subthreshold
 voltage_sup = integrator(V_reset, 2.02, 0.0, 100) # suprathreshold
 T = 100
 w_steps = T * 100
-M = w_steps * null_steps 
-plot(voltage_sub, label=L"1.5 \mu A")
-plot(voltage_sup, label=L"2.02 \mu A")
+M = w_steps * null_steps
+clf() 
+plot(voltage_sub, label=L"1.5 \; \mu A \;\; subthreshold")
+plot(voltage_sup, label=L"2.02 \; \mu A \;\; suprathreshold")
 xticks([i for i in 0:2000:w_steps], [Int(i) for i in 0:20:M/w_steps]) #rescale ticks labels
-ylabel("membrane potential [mV]")
-xlabel("time [ms]")
+ylabel("membrane potential [mV]", size=30)
+xlabel("time [ms]", size=30)
+legend(fontsize="xx-large")
+yticks(size=20)
+xticks(size=20)
+tight_layout()
 ==================================================================================================#
 
 # =======    DELIVERING A PULSE OF CURRENT      ===================================================
@@ -71,13 +76,18 @@ end;
 
 #==========   TEST   =============================================================================
 voltage = pulse(100, 1.6, 200, 100, 0.0)
+clf()
 plot(voltage, label=L"02 \mu A")
 T = 400
 w_steps = T * 100
 M = w_steps * null_steps 
 xticks([i for i in 0:5000:w_steps], [Int(i) for i in 0:50:M/w_steps*4]) #rescale ticks labels
-ylabel("membrane potential [mV]")
-xlabel("time [ms]")
+ylabel("membrane potential [mV]", size=30)
+xlabel("time [ms]", size=30)
+yticks(size=20)
+xticks(size=20)
+title(L"Pulse \; of \; 1.6 \mu A\; for \;200 \;ms", size=30)
+tight_layout()
 ==================================================================================================#
 
 # ==========    IV CURVE     === (current clamp mode) ============================================
@@ -93,9 +103,44 @@ end;
 
 #==========   TEST   =============================================================================
 current, voltage = IV_curve(-0.5, 1.5)
+clf()
 plot(voltage, current)
-xlabel("membrane potential [mV]")
-ylabel("current [uA]")
+xlabel("membrane potential [mV]", size=30)
+ylabel("current [uA]", size=30)
+yticks(size=20)
+xticks(size=20)
+title("EXP_IF: I-V curve", size=30)
+tight_layout()
+=================================================================================================#
+
+
+# ==========    F-I CURVE     === (current clamp mode) ============================================
+using FindPeaks1D
+Ns(vector) = length(findpeaks1d(vector, height=-52.5; prominence=15)[1]); #prom = 15
+
+function FI_curve(min_I,max_I)                     # min_I = minimum injected current [uA], max_I = maximum injected current [uA]
+    I = min_I:0.05:max_I                            # injected current array
+    F = zeros(length(I))                           # firing rate array
+    for i in 1:length(I)                           # for each injected current
+        F[i] = Ns(integrator(V_reset, I[i], 0.0, 100))*10 # firing rate after 100 ms
+    end
+    return I, F                                    # return injected current and firing rate 
+end;
+
+#==========   TEST   =============================================================================
+current, firing = FI_curve(1.3, 5.0)
+clf()
+scatter(current, firing)
+plot(current, firing)
+ylabel("firing rate [Hz]",size=30)
+xlabel("current [uA]", size=30)
+yticks(size=20)
+xticks(size=20)
+title("EXP_IF: F-I curve", size=30)
+tight_layout()
 ==================================================================================================#
+
+
+
 
 
