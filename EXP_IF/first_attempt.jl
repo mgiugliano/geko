@@ -62,6 +62,7 @@ xlabel("time [ms]", size=30)
 legend(fontsize="xx-large")
 yticks(size=20)
 xticks(size=20)
+title(L"Exponential \; Integrate \; and \; Fire \; model", size=30)
 tight_layout()
 ==================================================================================================#
 
